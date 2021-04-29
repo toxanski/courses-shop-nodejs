@@ -18,14 +18,15 @@ app.set('views', 'views'); // views - папка, где хранятся шаб
 
 app.use(express.static('public'));
 
+app.use(express.urlencoded({
+  extended: true
+}));
 
 const PORT = process.env.PORT || 3000;
 
 app.use('/', homeRoutes);
 app.use('/courses', coursesRoutes);
 app.use('/add', addRoutes);
-
-
 
 //на express`e без движка hbs
 // app.get('/', (request, response) => { 
