@@ -24,3 +24,13 @@
 .course .price.big {
   font-size: 2.5rem;
 }
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.courses-form-edit {
+  margin-bottom: 2rem;
+}
