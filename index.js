@@ -1,12 +1,20 @@
 const express = require('express');
 const mongoose = require('mongoose');
+
 const path = require('path');
 const homeRoutes = require('./routes/home');
 const cardRoutes = require('./routes/card');
 const coursesRoutes = require('./routes/courses');
 const addRoutes = require('./routes/add');
 const ordersRoutes = require('./routes/orders');
+const authRoutes = require('./routes/auth');
 const User = require('./models/user');
+const session = require('express-session');
+const MongoStore = require('connect-mongodb-session')(session);
+const varMiddleware = require('./middleware/variables');
+const userMiddleware = require('./middleware/user');
+const csrf = require('csurf');
+
 
 const Handlebars = require("handlebars");
 const exphbs = require('express-handlebars');
@@ -18,60 +26,51 @@ const hbs = exphbs.create({
 });
 const app = express();
 
+const MONGODB_URI = 'mongodb+srv://anton:vWwxMI90z5J7ybxG@cluster0.1tylu.mongodb.net/shop';
+
+const store = new MongoStore({
+  collections: 'sessions',
+  uri: MONGODB_URI
+})
+
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
  // views - папка, где хранятся шаблоны(можно менять)
-
-
-//
-
-app.use(async (req, res, next) => {
-  try {
-    const user = await User.findById('60a2eec3d3c49e1c78d49b15');
-
-    req.user = user;
-    // console.log('REQUEST', req.user);
-    next();
-  } catch (error) {
-    console.log(error)
-  }
-});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.urlencoded({
   extended: true
 }));
+app.use(session({
+  secret: 'some secret value',
+  resave: false,
+  saveUninitialized: false,
+  store // или по-другому store: store
+}));
 
-const PORT = process.env.PORT || 5000;
+app.use(csrf());
+app.use(varMiddleware);
+app.use(userMiddleware);
+
+const PORT = process.env.PORT || 80;
 
 app.use('/', homeRoutes);
 app.use('/courses', coursesRoutes);
 app.use('/add', addRoutes);
 app.use('/card', cardRoutes);
 app.use('/orders', ordersRoutes);
+app.use('/auth', authRoutes);
 
 async function start() {
   try {
-    const url = 'mongodb+srv://anton:vWwxMI90z5J7ybxG@cluster0.1tylu.mongodb.net/shop';
+    
     await mongoose.set('useFindAndModify', false);
-    await mongoose.connect(url, {
+    await mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
 
-
-    //юзер
-    const candidate = await User.findOne();
-    if (!candidate) {
-      const user = new User({
-        email: 'tosha.smirnov.2002@gmail.com',
-        name: 'Anton',
-        cart: {items: []}
-      })
-      await user.save();
-    }
-    //
     app.listen(PORT, () => {
       console.log(`Server is running on port - ${PORT}`);
     });

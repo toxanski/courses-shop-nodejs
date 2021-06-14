@@ -1,6 +1,7 @@
 const {Router} = require('express');
 const Course = require('../models/course');
 const router = Router();
+const auth = require('../middleware/auth');
 
 router.get('/', async (request, response) => {
   const courses = await Course.find().populate('userId', 'email name').select('title price img');
@@ -26,7 +27,7 @@ router.get('/:id/edit', async (req, res) => {
   });
 });
 
-router.post('/edit', async (req, res) => {
+router.post('/edit', auth, async (req, res) => {
   const {id} = req.body; // чтобы лишний раз id не попадал в массив в findByIdAndUpdate();
   delete req.body.id;
   await Course.findByIdAndUpdate(id, req.body);
@@ -34,7 +35,7 @@ router.post('/edit', async (req, res) => {
   res.redirect('/courses');
 });
 
-router.post('/remove', async (req, res) => {
+router.post('/remove', auth, async (req, res) => {
   try {
     await Course.deleteOne({_id: req.body.id});
     res.redirect('/courses');
